@@ -1,0 +1,3 @@
+/Users/tanjimhossain/Bytes/GL_CHERNO/CMakeFiles/rebuild_cache.dir
+/Users/tanjimhossain/Bytes/GL_CHERNO/CMakeFiles/edit_cache.dir
+/Users/tanjimhossain/Bytes/GL_CHERNO/CMakeFiles/opengl101.dir

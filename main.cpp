@@ -49,7 +49,14 @@ int main(int argc, char const *argv[])
     GLFWwindow* window;
     if(!glfwInit())
         return -1;
-    
+
+    glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    #ifdef __APPLE__
+        glfwWindowHint (GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    #endif
+
     window = glfwCreateWindow(640, 480, "Hello World", nullptr, nullptr);
     if(!window){
         glfwTerminate();
@@ -60,30 +67,46 @@ int main(int argc, char const *argv[])
 
     std::cout << glGetString(GL_VERSION) << std::endl;
 
-    // GL Code Here
-    float position[6] = {
-        -0.5f, -0.5f,
-        0.0f, 0.5f,
-        0.5f, -0.5f
+    float vertices[] = {
+    // positions         // colors
+     0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
+    -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
+     0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
     };
-    unsigned int buffer; 
-    glGenBuffers(1, &buffer); // Create VertexBuffer
-    glBindBuffer(GL_ARRAY_BUFFER, buffer); // Bind Buffer
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), position, GL_STATIC_DRAW); // Store data to VertexBuffer
-    
+
+    unsigned int VBO, VAO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+    // color attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
     
-    std::string vertexShader = "#version 330 core\n"
-    "layout(location = 0) in vec4 position;\n"
-    "void main(){\n"
-    "gl_Position = position;\n"
+    std::string vertexShader = 
+    "#version 330 core\n"
+    "layout (location = 0) in vec3 position;\n"
+    "layout (location = 1) in vec3 color;\n"
+    "out vec3 vertexColor;\n"
+    "void main()\n"
+    "{\n"
+    "    gl_Position = vec4(position, 1.0);\n"
+    "    vertexColor = color;\n"
     "}\n";
 
     std::string fragmentShader = "#version 330 core\n"
-    "layout(location = 0) out vec4 color;\n"
-    "void main(){\n"
-    "color = vec4(1.0, 0.0, 0.0, 1.0);\n"
+    "out vec4 fragColor;\n"
+    "in vec3 vertexColor;\n"
+    "void main()\n"
+    "{\n"
+    "     fragColor = vec4(vertexColor, 1.0f);\n"
     "}\n";
 
     unsigned int shader = CreateShader(vertexShader, fragmentShader);
@@ -93,6 +116,7 @@ int main(int argc, char const *argv[])
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
         glViewport(0, 0, width, height);
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
         // Legacy OpenGL
